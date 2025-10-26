@@ -200,4 +200,4 @@ if __name__ == "__main__":
     # El puerto 3001 coincide con el BACKEND_URL en tu archivo de React
     print(f"Iniciando servidor FastAPI en http://localhost:3001")
     print("Asegúrate de que 'crear_orden.py' y 'analizar_registro.py' estén en esta carpeta.")
-    uvicorn.run("main:app", host="0.0.0.0", port=3001, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=3001, reload=True) 
