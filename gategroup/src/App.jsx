@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import SmartBottleAnalyzer from './pages/SmartBottleAnalyzer';
 import Inventory from './pages/Inventory';
 import SupervisorDashboard from './pages/SupervisorDashboard';
+import EnhancedSupervisorDashboard from './pages/EnhancedSupervisorDashboard';
 
 export default function App() {
     return (
@@ -43,9 +44,19 @@ export default function App() {
                         }
                     />
 
-                    {/* Supervisor-Only Route */}
+                    {/* Supervisor-Only Routes */}
                     <Route
                         path="/dashboard"
+                        element={
+                            <ProtectedRoute requiredRole="supervisor">
+                                <EnhancedSupervisorDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Legacy Dashboard (Keep for backward compatibility) */}
+                    <Route
+                        path="/dashboard/basic"
                         element={
                             <ProtectedRoute requiredRole="supervisor">
                                 <SupervisorDashboard />

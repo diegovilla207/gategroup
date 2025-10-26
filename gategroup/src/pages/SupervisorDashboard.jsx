@@ -104,11 +104,8 @@ export default function SupervisorDashboard() {
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Overall Efficiency Metrics */}
                 <div className="bg-gray-800 rounded-xl p-6 border border-amber-500/20 shadow-xl">
-                    <h2 className="text-2xl font-bold text-amber-400 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Overall Line Efficiency
+                    <h2 className="text-2xl font-bold text-amber-400 mb-6">
+                        Overview
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         <MetricCard
@@ -136,77 +133,7 @@ export default function SupervisorDashboard() {
                     </div>
                 </div>
 
-                {/* Productivity by Employee */}
-                <div className="bg-gray-800 rounded-xl p-6 border border-amber-500/20 shadow-xl">
-                    <h2 className="text-2xl font-bold text-amber-400 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        Employee Productivity
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-gray-700">
-                                    <th className="pb-3 text-gray-400 font-medium">Employee</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Drawers</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Hours</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Drawers/Hour</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Performance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {productivity?.map((emp, idx) => (
-                                    <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
-                                        <td className="py-4 text-white font-medium">{emp.fullName}</td>
-                                        <td className="py-4 text-gray-300 text-center">{emp.totalDrawersCompleted}</td>
-                                        <td className="py-4 text-gray-300 text-center">{emp.totalHoursWorked}</td>
-                                        <td className="py-4 text-amber-400 font-bold text-center">{emp.drawersPerHour}</td>
-                                        <td className="py-4 text-center">
-                                            <PerformanceBadge value={emp.drawersPerHour} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
-                {/* Error Rates by Employee */}
-                <div className="bg-gray-800 rounded-xl p-6 border border-amber-500/20 shadow-xl">
-                    <h2 className="text-2xl font-bold text-amber-400 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        Error Rate Analysis
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-gray-700">
-                                    <th className="pb-3 text-gray-400 font-medium">Employee</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Total Items</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Errors</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Error Rate</th>
-                                    <th className="pb-3 text-gray-400 font-medium text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {errorRates?.map((emp, idx) => (
-                                    <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
-                                        <td className="py-4 text-white font-medium">{emp.fullName}</td>
-                                        <td className="py-4 text-gray-300 text-center">{emp.totalItems}</td>
-                                        <td className="py-4 text-gray-300 text-center">{emp.totalErrors}</td>
-                                        <td className="py-4 text-amber-400 font-bold text-center">{emp.errorRatePercent}%</td>
-                                        <td className="py-4 text-center">
-                                            <ErrorBadge value={emp.errorRatePercent} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
                 {/* Insights and Recommendations */}
                 <div className="bg-gray-800 rounded-xl p-6 border border-amber-500/20 shadow-xl">
@@ -253,25 +180,7 @@ function MetricCard({ label, value, icon, highlight = false, isError = false }) 
     );
 }
 
-function PerformanceBadge({ value }) {
-    if (value >= 1.2) {
-        return <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-medium">Excellent</span>;
-    } else if (value >= 1.0) {
-        return <span className="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-sm font-medium">Good</span>;
-    } else {
-        return <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-medium">Needs Training</span>;
-    }
-}
 
-function ErrorBadge({ value }) {
-    if (value < 1.0) {
-        return <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-medium">Excellent</span>;
-    } else if (value < 1.5) {
-        return <span className="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-sm font-medium">Good</span>;
-    } else {
-        return <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-medium">Needs Attention</span>;
-    }
-}
 
 function InsightCard({ type, message }) {
     const colors = {

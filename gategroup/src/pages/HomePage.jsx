@@ -4,12 +4,15 @@ import { useAuth } from '../context/AuthContext';
 // Import the image using the full relative path
 import bottleIcon from '/src/assets/botella.jpg';
 import robotMascot from '/src/assets/robot.png';
+import { useSound } from '../hooks/useSound';
 
 export default function HomePage() {
     const navigate = useNavigate();
     const { user, logout, isSupervisor } = useAuth();
+    const playButtonSound = useSound('/sounds/Sound-Button.mp3', { volume: 0.5 });
 
     const handleLogout = async () => {
+        await playButtonSound();
         await logout();
         navigate('/');
     };
@@ -94,7 +97,10 @@ export default function HomePage() {
 
                         {/* Smart Bottle Analyzer Card - Professional Style */}
                         <button
-                            onClick={() => navigate('/smart-bottle')}
+                            onClick={async () => {
+                                await playButtonSound();
+                                navigate('/smart-bottle');
+                            }}
                             className="group w-full bg-gray-800 hover:bg-gray-750 rounded-xl p-4 sm:p-6 shadow-xl transition-all duration-300 hover:shadow-2xl border-l-4 border-amber-500 hover:border-l-8"
                         >
                             <div className="flex items-center gap-3 sm:gap-5">
@@ -131,7 +137,10 @@ export default function HomePage() {
 
                         {/* Inventory Card - Professional Style */}
                         <button
-                            onClick={() => navigate('/inventory')}
+                            onClick={async () => {
+                                await playButtonSound();
+                                navigate('/inventory');
+                            }}
                             className="group w-full bg-gray-800 hover:bg-gray-750 rounded-xl p-4 sm:p-6 shadow-xl transition-all duration-300 hover:shadow-2xl border-l-4 border-amber-500 hover:border-l-8"
                         >
                             <div className="flex items-center gap-3 sm:gap-5">
@@ -169,7 +178,10 @@ export default function HomePage() {
                         {/* Supervisor Dashboard Card - Only visible to supervisors */}
                         {isSupervisor() && (
                             <button
-                                onClick={() => navigate('/dashboard')}
+                                onClick={async () => {
+                                    await playButtonSound();
+                                    navigate('/dashboard');
+                                }}
                                 className="group w-full bg-gradient-to-r from-purple-900 to-purple-800 hover:from-purple-800 hover:to-purple-700 rounded-xl p-4 sm:p-6 shadow-xl transition-all duration-300 hover:shadow-2xl border-l-4 border-purple-400 hover:border-l-8"
                             >
                                 <div className="flex items-center gap-3 sm:gap-5">

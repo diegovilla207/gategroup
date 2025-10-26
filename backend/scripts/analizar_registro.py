@@ -1,24 +1,15 @@
-#!/usr/bin/env python3
-"""
-Script para validar inventario desde la API web.
-Recibe el número de vuelo y los datos escaneados como argumentos de línea de comandos.
-"""
-
 import json
-import sys
 import itertools
-from datetime import datetime
-import snowflake.connector
 import os
-from dotenv import load_dotenv
+import sys
+from datetime import datetime
 
-# Cargar variables de entorno
-load_dotenv()
-
-# Peso de tara por caja (en gramos)
-PESO_TARA_POR_CAJA_G = 721.0
+# --- 1. ¡AJUSTA ESTE VALOR! ---
+# Define el peso (en gramos) que asumes para CADA caja vacía
+PESO_TARA_POR_CAJA_G = 721.0  # Ejemplo: 150 gramos por caja
 
 
+# --- (Las funciones formatear_solucion y resolver_discrepancia no cambian) ---
 def formatear_solucion(coeficientes, items):
     """
     Convierte una solución como (2, -1, 0) en un string legible.
@@ -67,6 +58,8 @@ def resolver_discrepancia(diferencia_peso, items_plan):
             suma_actual = sum(k * items[i][1] for i, k in enumerate(coeficientes))
             coste_actual = sum(abs(k) for k in coeficientes)
 
+            # Usar una tolerancia mayor (ej. 1g) puede ser necesario
+            # si los pesos unitarios tienen decimales o hay pequeñas variaciones
             if abs(suma_actual - diferencia_peso) < 1.0:
 
                 if coste_actual < min_coste:
@@ -79,102 +72,29 @@ def resolver_discrepancia(diferencia_peso, items_plan):
     return "Discrepancia de peso compleja no identificada."
 
 
-def obtener_orden_vuelo(flight_number):
+def analizar_registros(orden_file, registro_file):
     """
-    Obtiene la orden del vuelo desde Snowflake
+    Compara la orden (plan) con el registro (realidad),
+    restando el peso asumido de las cajas.
     """
+
+    # 1. Cargar los archivos JSON
     try:
-        conn = snowflake.connector.connect(
-            account=os.getenv('SNOWFLAKE_ACCOUNT'),
-            user=os.getenv('SNOWFLAKE_USER'),
-            password=os.getenv('SNOWFLAKE_PASSWORD'),
-            database=os.getenv('SNOWFLAKE_DATABASE'),
-            schema=os.getenv('SNOWFLAKE_SCHEMA'),
-            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE')
-        )
+        with open(orden_file, 'r', encoding='utf-8') as f:
+            datos_orden = json.load(f)
+        with open(registro_file, 'r', encoding='utf-8') as f:
+            datos_registro = json.load(f)
+    except FileNotFoundError as e:
+        return {"error": f"No se encontró el archivo {e.filename}"}
+    except json.JSONDecodeError as e:
+        return {"error": f"El archivo JSON está mal formateado. {e}"}
 
-        cursor = conn.cursor()
-
-        # Obtener información del vuelo y sus carritos usando la estructura correcta
-        query = """
-            SELECT
-                c.CART_ID,
-                c.CART_IDENTIFIER,
-                p.SKU,
-                p.PESO_UNITARIO_G,
-                ci.CANTIDAD_REQUERIDA,
-                p.PESO_TOLERANCIA
-            FROM FLIGHTS f
-            JOIN CARTS c ON f.FLIGHT_ID = c.FLIGHT_ID
-            JOIN CART_ITEMS ci ON c.CART_ID = ci.CART_ID
-            JOIN PRODUCTS p ON ci.PRODUCT_SKU = p.SKU
-            WHERE f.FLIGHT_NUMBER = %s
-            ORDER BY c.CART_ID, p.SKU
-        """
-
-        cursor.execute(query, (flight_number,))
-        rows = cursor.fetchall()
-
-        if not rows:
-            cursor.close()
-            conn.close()
-            return None
-
-        # Organizar datos por carrito
-        carritos = {}
-        for row in rows:
-            cart_id = row[0]
-            cart_identifier = row[1]
-            sku = row[2]
-            peso_unitario = float(row[3])
-            cantidad = row[4]
-            tolerancia = float(row[5])
-
-            if cart_id not in carritos:
-                carritos[cart_id] = {
-                    'cart_id': cart_id,
-                    'cart_identifier': cart_identifier,
-                    'items_requeridos': []
-                }
-
-            carritos[cart_id]['items_requeridos'].append({
-                'sku': sku,
-                'peso_unitario_g': peso_unitario,
-                'cantidad_requerida': cantidad,
-                'peso_tolerancia': tolerancia
-            })
-
-        cursor.close()
-        conn.close()
-
-        return {
-            'flight_number': flight_number,
-            'carritos': list(carritos.values())
-        }
-
-    except Exception as e:
-        print(f"Error conectando a Snowflake: {e}", file=sys.stderr)
-        return None
-
-
-def validar_inventario(flight_number, scanned_data):
-    """
-    Valida el inventario escaneado contra la orden del vuelo
-    """
-
-    # Obtener la orden del vuelo
-    datos_orden = obtener_orden_vuelo(flight_number)
-
-    if not datos_orden:
-        return {
-            "error": f"Vuelo '{flight_number}' no encontrado o sin carritos asignados."
-        }
-
-    # Crear el objeto de reporte final
+    # --- 2. CREAR EL OBJETO DE REPORTE FINAL ---
     reporte_final = {
         "analysis_timestamp": datetime.now().isoformat(),
-        "flight_number": flight_number,
-        "peso_tara_asumido_por_caja_g": PESO_TARA_POR_CAJA_G,
+        "orden_file": orden_file,
+        "registro_file": registro_file,
+        "peso_tara_asumido_por_caja_g": PESO_TARA_POR_CAJA_G,  # Informa qué peso se usó
         "reporte_carritos": []
     }
 
@@ -183,14 +103,14 @@ def validar_inventario(flight_number, scanned_data):
         for carrito in datos_orden['carritos']
     }
 
-    # Iterar sobre cada carrito escaneado
-    for scan_carrito in scanned_data:
+    # 3. Iterar sobre CADA CARRITO guardado en el archivo de registro
+    for scan_carrito in datos_registro:
         cart_id = scan_carrito.get('cart_id', 'desconocido')
         try:
             cajas_escaneadas = scan_carrito.get('cajas_escaneadas', [])
 
-            # Sumar peso y tipos detectados
-            peso_medido_bruto_total = 0.0
+            # --- A. AGREGAR LA "REALIDAD" DEL SCAN (SUMAR LAS CAJAS) ---
+            peso_medido_bruto_total = 0.0  # Peso CON cajas
             tipos_detectados_set = set()
             numero_de_cajas = 0
 
@@ -205,28 +125,33 @@ def validar_inventario(flight_number, scanned_data):
             for caja in cajas_escaneadas:
                 peso_caja = caja.get("peso_medido_g")
                 if peso_caja is None:
-                    print(f"Advertencia: Caja en carrito {cart_id} no tiene 'peso_medido_g'.", file=sys.stderr)
+                    # Decide cómo manejar esto: ¿ignorar la caja, dar error?
+                    # Por ahora, la ignoramos para el peso pero contamos la caja.
+                    print(f"Advertencia: Caja en carrito {cart_id} no tiene 'peso_medido_g'.")
                 else:
                     peso_medido_bruto_total += float(peso_caja)
 
                 tipos_detectados_set.update(caja.get("tipos_detectados_vision", []))
-                numero_de_cajas += 1
+                numero_de_cajas += 1  # Contar cada entrada, incluso si no tenía peso
 
-            # Calcular peso neto
+            # --- B. CALCULAR PESO NETO ---
             peso_tara_total_estimado = numero_de_cajas * PESO_TARA_POR_CAJA_G
-            peso_medido_neto_total = max(0, peso_medido_bruto_total - peso_tara_total_estimado)
+            peso_medido_neto_total = peso_medido_bruto_total - peso_tara_total_estimado
+
+            # Asegurarse de que el peso neto no sea negativo (podría pasar si la tara es muy alta)
+            peso_medido_neto_total = max(0, peso_medido_neto_total)
 
             resultado_carrito = {
                 "cart_id": cart_id,
                 "numero_cajas_escaneadas": numero_de_cajas,
                 "peso_bruto_medido_g": round(peso_medido_bruto_total, 2),
                 "peso_tara_estimado_g": round(peso_tara_total_estimado, 2),
-                "peso_neto_medido_g": round(peso_medido_neto_total, 2),
+                "peso_neto_medido_g": round(peso_medido_neto_total, 2),  # <-- Peso a comparar
                 "status": "OK",
                 "reporte": []
             }
 
-            # Obtener el plan para este carrito
+            # --- C. OBTENER EL "PLAN" PARA ESTE CARRITO ---
             plan = plan_carritos.get(cart_id)
             if not plan:
                 resultado_carrito["status"] = "ERROR"
@@ -234,7 +159,7 @@ def validar_inventario(flight_number, scanned_data):
                 reporte_final["reporte_carritos"].append(resultado_carrito)
                 continue
 
-            # Calcular totales del plan
+            # --- D. CALCULAR TOTALES DEL "PLAN" (Peso esperado de CONTENIDO) ---
             peso_esperado_contenido = 0.0
             tolerancia_total = 0.0
             tipos_esperados_set = set()
@@ -247,31 +172,36 @@ def validar_inventario(flight_number, scanned_data):
                 tipos_esperados_set.add(item["sku"])
                 items_plan_dict[item["sku"]] = {"peso": item.get("peso_unitario_g", 0)}
 
+            # Redondear para consistencia
             peso_esperado_contenido = round(peso_esperado_contenido, 2)
             tolerancia_total = round(tolerancia_total, 2)
 
+            # --- E. COMPARAR Y GENERAR REPORTE ---
             # Comparar tipos
             items_no_esperados = tipos_detectados_set - tipos_esperados_set
             items_no_detectados = tipos_esperados_set - tipos_detectados_set
 
             if items_no_esperados:
-                resultado_carrito["status"] = "OK"
+                resultado_carrito["status"] = "ERROR_VISUAL"
                 resultado_carrito["reporte"].append(
                     f"Productos INCORRECTOS detectados: {sorted(list(items_no_esperados))}")
             if items_no_detectados:
-                if resultado_carrito["status"] == "OK":
-                    resultado_carrito["status"] = "OK"
+                if resultado_carrito["status"] == "OK":  # Solo marcar si no hay otro error visual
+                    resultado_carrito["status"] = "WARNING_VISUAL"  # O ERROR_VISUAL si quieres ser más estricto
                 resultado_carrito["reporte"].append(
                     f"Productos FALTANTES (no vistos): {sorted(list(items_no_detectados))}")
 
-            # Comparar peso neto vs peso esperado
+            # Comparar peso NETO vs peso de CONTENIDO esperado
             peso_min_esperado = peso_esperado_contenido - tolerancia_total
             peso_max_esperado = peso_esperado_contenido + tolerancia_total
 
+            # Usar el peso NETO calculado
             if not (peso_min_esperado <= peso_medido_neto_total <= peso_max_esperado):
+                # Marcar como error si no había ya uno visual más grave
                 if resultado_carrito["status"] == "OK" or resultado_carrito["status"] == "WARNING_VISUAL":
-                    resultado_carrito["status"] = "OK" 
+                    resultado_carrito["status"] = "ERROR_PESO"
 
+                # Calcular diferencia usando PESO NETO
                 diferencia = round(peso_esperado_contenido - peso_medido_neto_total, 2)
                 signo = "Faltan" if diferencia > 0 else "Sobran"
                 reporte_detallado = (
@@ -284,48 +214,48 @@ def validar_inventario(flight_number, scanned_data):
                 sugerencia = resolver_discrepancia(diferencia, items_plan_dict)
                 resultado_carrito["reporte"].append(sugerencia)
 
-            # Si todo está OK
+            # Si después de todo, el status sigue OK
             if resultado_carrito["status"] == "OK":
                 resultado_carrito["reporte"].append(
-                    f"Carrito validado correctamente. Peso neto: {peso_medido_neto_total:.2f}g (Esperado: {peso_esperado_contenido}g)")
+                    f"Peso neto correcto (Esperado: {peso_esperado_contenido}g, Medido Neto: {peso_medido_neto_total:.2f}g)")
 
             reporte_final["reporte_carritos"].append(resultado_carrito)
 
         except KeyError as e:
-            reporte_final["reporte_carritos"].append({
-                "cart_id": cart_id,
-                "status": "ERROR",
-                "reporte": [f"Falta la clave {e} en el JSON."]
-            })
+            reporte_final["reporte_carritos"].append({"cart_id": cart_id, "error": f"Falta la clave {e} en el JSON."})
         except Exception as e:
-            reporte_final["reporte_carritos"].append({
-                "cart_id": cart_id,
-                "status": "ERROR",
-                "reporte": [f"Error procesando registro: {str(e)}"]
-            })
+            reporte_final["reporte_carritos"].append({"cart_id": cart_id, "error": f"Error procesando registro: {e}"})
 
     return reporte_final
 
 
+# --- EJEMPLO DE CÓMO USAR EL SCRIPT ---
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print(json.dumps({"error": "Se requieren 2 argumentos: flight_number y scanned_data (JSON)"}), file=sys.stderr)
+
+    # --- 1. DEFINE LOS NOMBRES DE TUS ARCHIVOS ---
+    archivo_orden = "orden_por_carritos_AM241.json"
+    archivo_registro = "registro_AM241.json"
+
+    # --- 2. EJECUTAR EL ANÁLISIS ---
+    print(f"\n--- Analizando {archivo_orden} con {archivo_registro} ---")
+    print(f"--- Asumiendo un peso tara por caja de: {PESO_TARA_POR_CAJA_G}g ---")
+
+    if not os.path.exists(archivo_orden):
+        print(f"Error: El archivo de orden '{archivo_orden}' no existe.")
+        print("Por favor, ejecuta 'crear_orden.py' primero.")
         sys.exit(1)
 
-    flight_number = sys.argv[1]
-
-    try:
-        scanned_data = json.loads(sys.argv[2])
-    except json.JSONDecodeError as e:
-        print(json.dumps({"error": f"JSON inválido en scanned_data: {str(e)}"}), file=sys.stderr)
+    if not os.path.exists(archivo_registro):
+        print(f"Error: El archivo de registro '{archivo_registro}' no existe.")
+        print("Por favor, crea un 'registro_AM241.json' de prueba.")
         sys.exit(1)
 
-    # Ejecutar validación
-    resultado = validar_inventario(flight_number, scanned_data)
+    reporte = analizar_registros(archivo_orden, archivo_registro)
 
-    # Imprimir resultado
-    print(json.dumps(resultado, ensure_ascii=False, indent=2))
-
-    # Si hay error, salir con código 1
-    if "error" in resultado:
+    if isinstance(reporte, dict) and "error" in reporte:
+        print(f"ERROR: {reporte['error']}")
         sys.exit(1)
+
+    print("\n--- REPORTE FINAL ---")
+    # Imprimir con ensure_ascii=False para caracteres especiales si los hubiera
+    print(json.dumps(reporte, indent=2, ensure_ascii=False))

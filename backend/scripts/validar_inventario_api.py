@@ -95,21 +95,20 @@ def obtener_orden_vuelo(flight_number):
 
         cursor = conn.cursor()
 
-        # Obtener información del vuelo y sus carritos usando la estructura correcta
+        # Obtener información del vuelo y sus carritos
         query = """
-            SELECT
-                c.CART_ID,
+            SELECT DISTINCT
+                fc.CART_ID,
                 c.CART_IDENTIFIER,
-                p.SKU,
-                p.PESO_UNITARIO_G,
-                ci.CANTIDAD_REQUERIDA,
-                p.PESO_TOLERANCIA
-            FROM FLIGHTS f
-            JOIN CARTS c ON f.FLIGHT_ID = c.FLIGHT_ID
-            JOIN CART_ITEMS ci ON c.CART_ID = ci.CART_ID
-            JOIN PRODUCTS p ON ci.PRODUCT_SKU = p.SKU
-            WHERE f.FLIGHT_NUMBER = %s
-            ORDER BY c.CART_ID, p.SKU
+                ip.SKU,
+                ip.PESO_UNITARIO_G,
+                ip.CANTIDAD,
+                ip.PESO_TOLERANCIA_G
+            FROM FLIGHT_CARTS fc
+            JOIN CARTS c ON fc.CART_ID = c.CART_ID
+            JOIN INVENTORY_PLAN ip ON fc.CART_ID = ip.CART_ID
+            WHERE fc.FLIGHT_NUMBER = %s
+            ORDER BY fc.CART_ID, ip.SKU
         """
 
         cursor.execute(query, (flight_number,))
@@ -126,9 +125,9 @@ def obtener_orden_vuelo(flight_number):
             cart_id = row[0]
             cart_identifier = row[1]
             sku = row[2]
-            peso_unitario = float(row[3])
+            peso_unitario = row[3]
             cantidad = row[4]
-            tolerancia = float(row[5])
+            tolerancia = row[5]
 
             if cart_id not in carritos:
                 carritos[cart_id] = {
@@ -255,12 +254,12 @@ def validar_inventario(flight_number, scanned_data):
             items_no_detectados = tipos_esperados_set - tipos_detectados_set
 
             if items_no_esperados:
-                resultado_carrito["status"] = "OK"
+                resultado_carrito["status"] = "ERROR_VISUAL"
                 resultado_carrito["reporte"].append(
                     f"Productos INCORRECTOS detectados: {sorted(list(items_no_esperados))}")
             if items_no_detectados:
                 if resultado_carrito["status"] == "OK":
-                    resultado_carrito["status"] = "OK"
+                    resultado_carrito["status"] = "WARNING_VISUAL"
                 resultado_carrito["reporte"].append(
                     f"Productos FALTANTES (no vistos): {sorted(list(items_no_detectados))}")
 
@@ -270,7 +269,7 @@ def validar_inventario(flight_number, scanned_data):
 
             if not (peso_min_esperado <= peso_medido_neto_total <= peso_max_esperado):
                 if resultado_carrito["status"] == "OK" or resultado_carrito["status"] == "WARNING_VISUAL":
-                    resultado_carrito["status"] = "OK" 
+                    resultado_carrito["status"] = "ERROR_PESO"
 
                 diferencia = round(peso_esperado_contenido - peso_medido_neto_total, 2)
                 signo = "Faltan" if diferencia > 0 else "Sobran"

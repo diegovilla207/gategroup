@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import robotDown from '../assets/robot-down.png';
+import { useSound } from '../hooks/useSound';
 
 // ¡API Key implementada como solicitaste!
 const GEMINI_API_KEY = "AIzaSyAxGw0arzRYw_VxnH73NIeK7wnOEJ28yLY";
@@ -109,6 +110,7 @@ export default function SmartBottleAnalyzer() {
     const [apiResponse, setApiResponse] = useState(null);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
+    const playButtonSound = useSound('/sounds/Sound-Button.mp3', { volume: 0.5 });
 
     // Maneja la selección de la imagen
     const handleImageUpload = (event) => {
@@ -124,7 +126,8 @@ export default function SmartBottleAnalyzer() {
     };
 
     // Activa el input de archivo oculto
-    const triggerFileInput = () => {
+    const triggerFileInput = async () => {
+        await playButtonSound();
         fileInputRef.current.click();
     };
 
@@ -132,6 +135,7 @@ export default function SmartBottleAnalyzer() {
     const analyzeBottle = async () => {
         if (!imageBase64 || !selectedAirline) return;
 
+        await playButtonSound();
         setStep('analyzing');
         setError(null);
         setApiResponse(null);
@@ -220,7 +224,8 @@ Responde ÚNICAMENTE con el formato JSON solicitado.`
     };
 
     // Reinicia el flujo
-    const startOver = () => {
+    const startOver = async () => {
+        await playButtonSound();
         setStep('select');
         setImageBase64(null);
         setApiResponse(null);

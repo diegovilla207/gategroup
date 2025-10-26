@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import User from './models/User.js';
 import Metrics from './models/Metrics.js';
+import Analytics from './models/Analytics.js';
 import { generateToken, authenticateToken, requireSupervisor } from './utils/auth.js';
 import { testConnection } from './config/snowflake.js';
 
@@ -36,9 +37,10 @@ app.post('/api/inventory/flight', (req, res) => {
 
     console.log(`Consultando inventario para vuelo: ${flight_number}`);
 
-    // Ejecutar script de Python
-    const pythonProcess = spawn('python3', [
-        path.join(__dirname, 'scripts', 'get_inventory.py'),
+    // Ejecutar script de Python usando el venv
+    const pythonPath = path.join(__dirname, 'backend', 'venv', 'bin', 'python3');
+    const pythonProcess = spawn(pythonPath, [
+        path.join(__dirname, 'scripts', 'crear_orden.py'),
         flight_number
     ]);
 
@@ -90,8 +92,9 @@ app.post('/api/inventory/validate', (req, res) => {
     console.log(`Validando inventario para vuelo: ${flight_number}`);
     console.log(`Datos escaneados:`, JSON.stringify(scanned_data, null, 2));
 
-    // Ejecutar script de Python para validación
-    const pythonProcess = spawn('python3', [
+    // Ejecutar script de Python para validación usando el venv
+    const pythonPath = path.join(__dirname, 'backend', 'venv', 'bin', 'python3');
+    const pythonProcess = spawn(pythonPath, [
         path.join(__dirname, 'scripts', 'validate_inventory.py'),
         flight_number,
         JSON.stringify(scanned_data)
@@ -326,6 +329,116 @@ app.get('/api/metrics/efficiency', authenticateToken, requireSupervisor, async (
         res.status(500).json({
             error: 'Server error',
             message: 'Could not fetch efficiency metrics'
+        });
+    }
+});
+
+// ========================
+// Enhanced Analytics Endpoints
+// ========================
+
+/**
+ * GET /api/analytics/enhanced-dashboard
+ * Get comprehensive dashboard with charts and trends
+ * Supervisor-only route
+ */
+app.get('/api/analytics/enhanced-dashboard', authenticateToken, requireSupervisor, async (req, res) => {
+    try {
+        const dashboardData = await Analytics.getEnhancedDashboard();
+        res.json(dashboardData);
+    } catch (error) {
+        console.error('Error fetching enhanced dashboard:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not fetch enhanced dashboard data'
+        });
+    }
+});
+
+/**
+ * GET /api/analytics/training-needs
+ * Get identified training needs for employees
+ * Supervisor-only route
+ */
+app.get('/api/analytics/training-needs', authenticateToken, requireSupervisor, async (req, res) => {
+    try {
+        const trainingNeeds = await Analytics.getTrainingNeeds();
+        res.json(trainingNeeds);
+    } catch (error) {
+        console.error('Error fetching training needs:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not fetch training needs'
+        });
+    }
+});
+
+/**
+ * POST /api/analytics/session
+ * Record an inventory session for analytics
+ */
+app.post('/api/analytics/session', authenticateToken, async (req, res) => {
+    try {
+        const result = await Analytics.recordInventorySession(req.body);
+        res.json(result);
+    } catch (error) {
+        console.error('Error recording session:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not record session'
+        });
+    }
+});
+
+/**
+ * POST /api/analytics/error
+ * Log an error for analysis
+ */
+app.post('/api/analytics/error', authenticateToken, async (req, res) => {
+    try {
+        const result = await Analytics.logError(req.body);
+        res.json(result);
+    } catch (error) {
+        console.error('Error logging error:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not log error'
+        });
+    }
+});
+
+/**
+ * POST /api/analytics/alert/acknowledge
+ * Acknowledge an alert
+ * Supervisor-only route
+ */
+app.post('/api/analytics/alert/acknowledge', authenticateToken, requireSupervisor, async (req, res) => {
+    try {
+        const { alertId } = req.body;
+        const result = await Analytics.acknowledgeAlert(alertId);
+        res.json(result);
+    } catch (error) {
+        console.error('Error acknowledging alert:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not acknowledge alert'
+        });
+    }
+});
+
+/**
+ * POST /api/analytics/chat
+ * Save AI chat interaction
+ */
+app.post('/api/analytics/chat', authenticateToken, async (req, res) => {
+    try {
+        const result = await Analytics.saveChatInteraction(req.body);
+        res.json(result);
+    } catch (error) {
+        console.error('Error saving chat:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Could not save chat interaction'
         });
     }
 });

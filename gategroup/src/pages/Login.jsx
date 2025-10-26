@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import robotMascot from '/src/assets/robot.png';
+import { useSound } from '../hooks/useSound';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -10,6 +11,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const { login, isAuthenticated } = useAuth();
+    const playButtonSound = useSound('/sounds/Sound-Button.mp3', { volume: 0.5 });
 
     // Redirect to home if already logged in
     useEffect(() => {
@@ -22,6 +24,9 @@ export default function Login() {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        
+        // Reproducir sonido y esperar a que termine
+        await playButtonSound();
 
         try {
             const result = await login(username, password);
@@ -52,11 +57,11 @@ export default function Login() {
                 <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 border border-amber-500/20">
                     {/* Logo and Title */}
                     <div className="text-center mb-8">
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-2">
                             <img
                                 src={robotMascot}
                                 alt="Gate Group Robot"
-                                className="w-24 h-24 object-contain animate-float"
+                                className="w-52 h-52 object-contain animate-float"
                             />
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-2">
@@ -138,16 +143,7 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* Demo Credentials Info (Remove in production) */}
-                <div className="mt-6 bg-gray-800/50 backdrop-blur-md rounded-lg p-4 border border-amber-500/20">
-                    <p className="text-gray-300 text-xs text-center mb-2 font-semibold">
-                        Demo Credentials
-                    </p>
-                    <div className="text-gray-400 text-xs space-y-1">
-                        <p>Employee: <span className="text-amber-400 font-mono">employee</span> / <span className="text-amber-400 font-mono">password123</span></p>
-                        <p>Supervisor: <span className="text-amber-400 font-mono">supervisor</span> / <span className="text-amber-400 font-mono">password123</span></p>
-                    </div>
-                </div>
+           
             </div>
         </div>
     );
