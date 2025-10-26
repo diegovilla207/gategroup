@@ -1,16 +1,62 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
 import HomePage from './pages/HomePage';
 import SmartBottleAnalyzer from './pages/SmartBottleAnalyzer';
 import Inventory from './pages/Inventory';
+import SupervisorDashboard from './pages/SupervisorDashboard';
 
 export default function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/smart-bottle" element={<SmartBottleAnalyzer />} />
-                <Route path="/inventory" element={<Inventory />} />
-            </Routes>
-        </Router>
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    {/* Public Route - Login Page */}
+                    <Route path="/" element={<Login />} />
+
+                    {/* Protected Routes - Require Authentication */}
+                    <Route
+                        path="/home"
+                        element={
+                            <ProtectedRoute>
+                                <HomePage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/smart-bottle"
+                        element={
+                            <ProtectedRoute>
+                                <SmartBottleAnalyzer />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/inventory"
+                        element={
+                            <ProtectedRoute>
+                                <Inventory />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Supervisor-Only Route */}
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute requiredRole="supervisor">
+                                <SupervisorDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Catch-all redirect */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 }
