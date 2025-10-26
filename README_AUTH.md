@@ -19,6 +19,88 @@ This repository now includes a **fully functional authentication system** with S
 ## Features
 
 ### 🔐 Authentication & Security
+
+- ✅ Secure JWT-based authentication
+- ✅ Password hashing with bcrypt
+- ✅ HTTP-only cookies for token storage
+- ✅ Role-based access control (Employee/Supervisor)
+- ✅ Protected routes on frontend
+- ✅ 24-hour token expiration
+- ✅ CORS configuration
+- ✅ SQL injection prevention
+
+### 👥 User Roles
+
+**Employee:**
+
+- Access to Bottle Analysis
+- Access to Inventory Manager
+
+**Supervisor:**
+
+- All employee features
+- **Analytics Dashboard** with:
+  - Productivity metrics per employee
+  - Error rate analysis
+  - Overall line efficiency
+  - Performance insights & recommendations
+
+### 📊 Supervisor Dashboard
+
+- Real-time team performance metrics
+- Employee productivity tracking (drawers/hour)
+- Error rate monitoring
+- Performance badges (Excellent/Good/Needs Training)
+- Actionable insights for team management
+- Identify training needs
+- Balance workloads
+- Recognize high performers
+
+---
+
+## Demo Credentials
+
+| Username     | Password      | Role       | Access                      |
+| ------------ | ------------- | ---------- | --------------------------- |
+| `supervisor` | `password123` | Supervisor | All features + Dashboard    |
+| `employee`   | `password123` | Employee   | Bottle Analysis + Inventory |
+
+---
+
+## Installation
+
+### 1. Install Dependencies
+
+````bash
+# Backend
+cd backend
+npm install
+pip install snowflake-connector-python python-dotenv bcrypt
+
+# Frontend
+cd ../gategroup
+npm install
+# SmartStation - Authentication System
+
+## Complete Role-Based Login & Dashboard System
+
+SmartStation includes a full authentication system with Snowflake integration, role-based access control, and a supervisor analytics dashboard.
+
+---
+
+## Quick Links
+
+- 📖 [Quick Start Guide](QUICKSTART.md) - Get running in 5 minutes
+- 📚 [Complete Setup Documentation](AUTH_SETUP.md) - Detailed installation & configuration
+- 🏗️ [System Architecture](SYSTEM_ARCHITECTURE.md) - Technical diagrams & flow charts
+- 📋 [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Complete file listing & changes
+- 🔧 [Backend Documentation](backend/README.md) - API reference & development guide
+
+---
+
+## Features
+
+### 🔐 Authentication & Security
 - ✅ Secure JWT-based authentication
 - ✅ Password hashing with bcrypt
 - ✅ HTTP-only cookies for token storage
@@ -67,36 +149,33 @@ This repository now includes a **fully functional authentication system** with S
 
 ### 1. Install Dependencies
 
-```bash
+```powershell
 # Backend
-cd backend
-npm install
+cd backend; npm install
 pip install snowflake-connector-python python-dotenv bcrypt
 
 # Frontend
-cd ../gategroup
-npm install
-```
+cd ..\gategroup; npm install
+````
 
 ### 2. Initialize Database
 
-```bash
-cd backend
-python3 scripts/init_database.py
+```powershell
+cd backend; python3 scripts/init_database.py
 ```
 
 ### 3. Start Servers
 
-**Backend** (Terminal 1):
-```bash
-cd backend
-npm start
+Backend (Terminal 1):
+
+```powershell
+cd backend; npm start
 ```
 
-**Frontend** (Terminal 2):
-```bash
-cd gategroup
-npm run dev
+Frontend (Terminal 2):
+
+```powershell
+cd gategroup; npm run dev
 ```
 
 ### 4. Access Application
@@ -148,21 +227,25 @@ gategroup-1/
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 - `GET /api/auth/me` - Get current user (protected)
 
 ### Metrics (Supervisor Only)
+
 - `GET /api/metrics/dashboard` - Complete dashboard
 - `GET /api/metrics/productivity` - Productivity data
 - `GET /api/metrics/error-rates` - Error rate data
 - `GET /api/metrics/efficiency` - Efficiency data
 
 ### Inventory
+
 - `POST /api/inventory/flight` - Get flight inventory
 - `POST /api/inventory/validate` - Validate inventory
 
 ### System
+
 - `GET /api/health` - Health check
 
 ---
@@ -170,18 +253,21 @@ gategroup-1/
 ## Technology Stack
 
 ### Frontend
+
 - React 19.1 + Vite 7.1
 - React Router DOM 7.9
 - Tailwind CSS 3.4
 - Context API for state
 
 ### Backend
+
 - Node.js + Express 4.18
 - JWT authentication
 - bcrypt password hashing
 - Snowflake SDK
 
 ### Database
+
 - Snowflake Cloud Database
 - Tables: USERS, DRAWER_COMPLETIONS, INVENTORY_SCANS
 
@@ -190,6 +276,7 @@ gategroup-1/
 ## Testing
 
 ### Manual Testing
+
 1. Login with employee account
 2. Verify access to Bottle Analysis & Inventory
 3. Verify NO access to Dashboard
@@ -198,12 +285,13 @@ gategroup-1/
 6. Check metrics display correctly
 
 ### Automated Testing
-```bash
-cd backend
-./scripts/test_auth.sh
+
+```powershell
+cd backend; ./scripts/test_auth.sh
 ```
 
 This tests:
+
 - Health check
 - Supervisor login
 - User info retrieval
@@ -218,6 +306,7 @@ This tests:
 ## Security Features
 
 ✅ **Implemented:**
+
 - Password hashing (bcrypt, 10 rounds)
 - JWT tokens (24-hour expiration)
 - HTTP-only cookies
@@ -228,6 +317,7 @@ This tests:
 - Environment variables for secrets
 
 🔒 **Production Recommendations:**
+
 - Change JWT_SECRET to strong random string
 - Enable HTTPS (secure cookies)
 - Implement rate limiting
@@ -240,12 +330,14 @@ This tests:
 ## Use Cases
 
 ### For Employees
+
 1. Login to access daily tasks
 2. Use Bottle Analyzer for quality control
 3. Manage inventory with barcode scanning
 4. Track personal progress
 
 ### For Supervisors
+
 1. Login with supervisor credentials
 2. Access all employee features
 3. **View Analytics Dashboard** to:
@@ -261,18 +353,21 @@ This tests:
 ## Development
 
 ### Adding New Roles
+
 1. Update database schema to include new role
 2. Add role check to `utils/auth.js`
 3. Create role-specific routes
 4. Update frontend role checking
 
 ### Adding New Metrics
+
 1. Add query to `models/Metrics.js`
 2. Create endpoint in `server.js`
 3. Update dashboard component
 4. Add data visualization
 
 ### Customization
+
 - Colors: Edit Tailwind classes
 - Branding: Update logos in `src/assets/`
 - Metrics: Modify queries in `models/Metrics.js`
@@ -281,101 +376,35 @@ This tests:
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Cannot connect to Snowflake | Check `.env` credentials |
-| Login fails | Run `init_database.py` |
-| CORS errors | Verify ports (3001, 5173) |
-| Token expired | Logout and login again |
-| Dashboard no data | Mock data used by default |
+| Problem                     | Solution                                                          |
+| --------------------------- | ----------------------------------------------------------------- |
+| Cannot connect to Snowflake | Check `backend/.env` credentials and network access               |
+| Login fails                 | Ensure `init_database.py` was run and backend is running          |
+| CORS errors                 | Verify ports (3001, 5173) and CORS origin settings in `server.js` |
+| Token expired               | Logout and login again                                            |
+| Dashboard no data           | Mock data used by default or run data initialization script       |
 
 See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed troubleshooting.
 
 ---
 
-## Screenshots
-
-### Login Page
-- Clean, professional design
-- Error handling
-- Demo credentials displayed
-
-### Employee Home
-- Bottle Analysis option
-- Inventory Manager option
-- User info & logout button
-
-### Supervisor Home
-- All employee options
-- **+ Analytics Dashboard option** (purple card)
-- Supervisor role badge
-
-### Supervisor Dashboard
-- Overall efficiency metrics
-- Employee productivity table
-- Error rate analysis
-- Performance badges
-- Insights & recommendations
-
----
-
-## Next Steps
-
-### Immediate
-- [x] Setup authentication system
-- [x] Create role-based routes
-- [x] Build supervisor dashboard
-- [x] Write documentation
-
-### Short Term
-- [ ] Connect real-time data
-- [ ] Add user profile editing
-- [ ] Implement password reset
-- [ ] Add data export features
-
-### Long Term
-- [ ] Multi-factor authentication
-- [ ] Advanced analytics with charts
-- [ ] Mobile app support
-- [ ] Email notifications
-- [ ] Audit logging
-
----
-
-## Support
-
-For help:
-1. Check [QUICKSTART.md](QUICKSTART.md)
-2. Review [AUTH_SETUP.md](AUTH_SETUP.md)
-3. See [Troubleshooting](#troubleshooting) section
-4. Check browser console & backend logs
-
----
-
 ## Credits
 
-**Project**: GateGroup SmartStation
+**Project**: SmartStation
 **Event**: HackMTY 2025
 **Implementation**: January 2025
-**Built with**: Claude Code 🤖
 
 ---
 
 ## License
 
-© 2025 GateGroup - HackMTY 2025
+© 2025 SmartStation / GateGroup
 
 ---
 
-**System Status**: ✅ Production Ready
+**System Status**: ✅ Ready for local testing
 
 **Demo**: http://localhost:5173 (after setup)
-
-**Documentation**: Complete ✅
-
-**Testing**: Passing ✅
-
-**Security**: Implemented ✅
 
 ---
 

@@ -1,8 +1,8 @@
 # Authentication System Setup Guide
 
-## GateGroup SmartStation - Role-Based Login System
+## SmartStation - Role-Based Login System
 
-This guide will help you set up and run the complete authentication system with Snowflake integration.
+This guide explains how to set up and run SmartStation locally, including optional Snowflake integration.
 
 ---
 
@@ -35,6 +35,7 @@ This authentication system provides:
 ### User Roles
 
 1. **Employee**
+
    - Access to Bottle Analysis
    - Access to Inventory Manager
 
@@ -54,7 +55,7 @@ Before you begin, ensure you have the following installed:
 - **Node.js** (v16 or higher)
 - **Python 3** (v3.8 or higher)
 - **npm** or **yarn**
-- **Snowflake account** with credentials
+- **Snowflake account** (optional) with credentials if you plan to use Snowflake
 
 ---
 
@@ -96,31 +97,22 @@ gategroup-1/
 
 ### 1. Install Backend Dependencies
 
-```bash
-cd backend
-npm install
+```powershell
+cd backend; npm install
 ```
 
-This will install:
-- `express` - Web server
-- `cors` - CORS middleware
-- `dotenv` - Environment variables
-- `snowflake-sdk` - Snowflake connector
-- `bcryptjs` - Password hashing
-- `jsonwebtoken` - JWT authentication
-- `cookie-parser` - Cookie handling
+This will install the backend dependencies used by SmartStation (Express, CORS, dotenv, Snowflake SDK, bcrypt, jsonwebtoken, cookie-parser).
 
 ### 2. Install Python Dependencies
 
-```bash
+```powershell
 pip install snowflake-connector-python python-dotenv bcrypt
 ```
 
 ### 3. Install Frontend Dependencies
 
-```bash
-cd ../gategroup
-npm install
+```powershell
+cd ..\gategroup; npm install
 ```
 
 ---
@@ -129,29 +121,31 @@ npm install
 
 ### 1. Configure Snowflake Credentials
 
-The `.env` file in the `backend/` directory already contains your Snowflake credentials:
+Create a `backend/.env` file with your Snowflake credentials and a JWT secret. Never commit this file to source control.
+
+Example `.env` (replace values):
 
 ```env
-SNOWFLAKE_USER="Rosu76"
-SNOWFLAKE_PASSWORD="E4A7Fg58HwVzQh!"
-SNOWFLAKE_ACCOUNT="cucbppa-am55842"
+SNOWFLAKE_USER="your_user"
+SNOWFLAKE_PASSWORD="your_password"
+SNOWFLAKE_ACCOUNT="your_account"
 SNOWFLAKE_WAREHOUSE="COMPUTE_WH"
 SNOWFLAKE_DATABASE="LOGIN_DB"
 SNOWFLAKE_SCHEMA="MAIN"
 
-JWT_SECRET="gategroup-hackmty-2025-super-secret-key-change-in-production"
+JWT_SECRET="change_this_to_a_strong_random_value"
 ```
 
 ### 2. Initialize the Database
 
 Run the initialization script to create tables and insert demo users:
 
-```bash
-cd backend
-python3 scripts/init_database.py
+```powershell
+cd backend; python3 scripts/init_database.py
 ```
 
 This script will:
+
 - Create the `USERS` table
 - Create the `DRAWER_COMPLETIONS` table (for productivity metrics)
 - Create the `INVENTORY_SCANS` table (for error tracking)
@@ -161,6 +155,7 @@ This script will:
 #### Database Schema
 
 **USERS Table:**
+
 ```sql
 USER_ID          INTEGER (Primary Key, Auto-increment)
 USERNAME         VARCHAR(50) UNIQUE
@@ -173,6 +168,7 @@ UPDATED_AT       TIMESTAMP
 ```
 
 **DRAWER_COMPLETIONS Table:**
+
 ```sql
 DRAWER_ID        INTEGER (Primary Key)
 USER_ID          INTEGER (Foreign Key -> USERS)
@@ -183,6 +179,7 @@ ITEMS_COUNT      INTEGER
 ```
 
 **INVENTORY_SCANS Table:**
+
 ```sql
 SCAN_ID          INTEGER (Primary Key)
 USER_ID          INTEGER (Foreign Key -> USERS)
@@ -197,52 +194,31 @@ SCAN_TIME        TIMESTAMP
 
 ### 1. Start the Backend Server
 
-```bash
-cd backend
-npm start
+```powershell
+cd backend; npm start
 ```
 
-Or for development with auto-restart:
-```bash
-npm run dev
+Development (with auto-restart if available):
+
+```powershell
+cd backend; npm run dev
 ```
 
-The backend will start on **http://localhost:3001**
-
-You should see:
-```
-🚀 Backend server running on http://localhost:3001
-
-📦 Endpoints disponibles:
-   Authentication:
-     POST /api/auth/login - User login
-     POST /api/auth/logout - User logout
-     GET  /api/auth/me - Get current user info (protected)
-
-   Supervisor Metrics (protected):
-     GET  /api/metrics/dashboard - Complete dashboard data
-     GET  /api/metrics/productivity - Productivity by employee
-     GET  /api/metrics/error-rates - Error rates by employee
-     GET  /api/metrics/efficiency - Overall efficiency metrics
-
-🔌 Testing Snowflake connection...
-✅ Snowflake connection successful
-```
+The backend listens on http://localhost:3001 by default.
 
 ### 2. Start the Frontend Server
 
 In a new terminal:
 
-```bash
-cd gategroup
-npm run dev
+```powershell
+cd gategroup; npm run dev
 ```
 
-The frontend will start on **http://localhost:5173**
+Frontend default: http://localhost:5173
 
 ### 3. Access the Application
 
-Open your browser and navigate to: **http://localhost:5173**
+Open your browser and navigate to: http://localhost:5173
 
 ---
 
@@ -250,13 +226,13 @@ Open your browser and navigate to: **http://localhost:5173**
 
 ### Demo User Credentials
 
-| Username     | Password    | Role       |
-|--------------|-------------|------------|
-| supervisor   | password123 | supervisor |
-| employee     | password123 | employee   |
-| jane_smith   | password123 | employee   |
-| bob_johnson  | password123 | employee   |
-| alice_williams | password123 | employee |
+| Username       | Password    | Role       |
+| -------------- | ----------- | ---------- |
+| supervisor     | password123 | supervisor |
+| employee       | password123 | employee   |
+| jane_smith     | password123 | employee   |
+| bob_johnson    | password123 | employee   |
+| alice_williams | password123 | employee   |
 
 ### Test Scenarios
 
@@ -294,52 +270,38 @@ Open your browser and navigate to: **http://localhost:5173**
    - `http://localhost:5173/smart-bottle` → Should redirect to login
    - `http://localhost:5173/dashboard` → Should redirect to login
 
-#### 4. API Testing with curl
+#### 4. API Testing (example using curl on PowerShell)
 
-Test login:
-```bash
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"supervisor","password":"password123"}' \
-  -c cookies.txt
+Login:
+
+```powershell
+curl -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"username":"supervisor","password":"password123"}' -c cookies.txt
 ```
 
-Test protected endpoint:
-```bash
-curl http://localhost:3001/api/auth/me \
-  -b cookies.txt
+Get current user:
+
+```powershell
+curl http://localhost:3001/api/auth/me -b cookies.txt
 ```
 
-Test supervisor metrics:
-```bash
-curl http://localhost:3001/api/metrics/dashboard \
-  -b cookies.txt
+Supervisor metrics:
+
+```powershell
+curl http://localhost:3001/api/metrics/dashboard -b cookies.txt
 ```
 
 ---
 
-## Security Best Practices
+### Security Best Practices
 
-### ✅ Implemented Security Features
+✅ Implemented (high level): password hashing (bcrypt), JWT tokens with 24h expiry, HTTP-only cookies, CORS config, role-based middleware, and parameterized queries.
 
-1. **Password Hashing**: Passwords are hashed using bcrypt (salt rounds: 10)
-2. **JWT Tokens**: Secure token-based authentication with 24-hour expiry
-3. **HTTP-Only Cookies**: Tokens stored in HTTP-only cookies (not accessible via JavaScript)
-4. **CORS Configuration**: Configured to only allow requests from frontend origin
-5. **Role-Based Access Control**: Middleware checks user roles before allowing access
-6. **Protected Routes**: Frontend routes require authentication
-7. **Environment Variables**: Sensitive data stored in .env file
+Recommended for production:
 
-### 🔒 Production Recommendations
-
-1. **Change JWT Secret**: Update `JWT_SECRET` in `.env` to a strong random string
-2. **Use HTTPS**: Enable `secure: true` in cookie settings for production
-3. **Password Policy**: Implement password strength requirements
-4. **Rate Limiting**: Add rate limiting to prevent brute force attacks
-5. **Input Validation**: Validate all user inputs on backend
-6. **SQL Injection Prevention**: Use parameterized queries (already implemented)
-7. **Token Refresh**: Implement refresh tokens for better security
-8. **Audit Logging**: Log all authentication attempts and access
+- Replace `JWT_SECRET` with a strong random value
+- Run behind HTTPS and set secure cookies
+- Implement rate limiting and input validation
+- Add audit logging and monitoring
 
 ### Example Production .env
 
@@ -360,6 +322,7 @@ JWT_SECRET="your_very_long_and_random_secret_key_here_at_least_64_characters_lon
 ```
 
 Generate a strong secret:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
@@ -371,6 +334,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Issue: "Cannot connect to Snowflake"
 
 **Solution:**
+
 1. Verify your `.env` credentials are correct
 2. Check your Snowflake account status
 3. Ensure your IP is whitelisted in Snowflake
@@ -383,6 +347,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Issue: "User not found" or "Invalid credentials"
 
 **Solution:**
+
 1. Make sure you ran the database initialization script:
    ```bash
    python3 scripts/init_database.py
@@ -395,19 +360,23 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Issue: "CORS error" in browser console
 
 **Solution:**
+
 1. Ensure backend is running on port 3001
 2. Ensure frontend is running on port 5173
 3. Check CORS configuration in `server.js`:
    ```javascript
-   app.use(cors({
-       origin: 'http://localhost:5173',
-       credentials: true
-   }));
+   app.use(
+     cors({
+       origin: "http://localhost:5173",
+       credentials: true,
+     })
+   );
    ```
 
 ### Issue: "Token expired" or "Authentication failed"
 
 **Solution:**
+
 1. Logout and login again
 2. Clear browser cookies
 3. Check if backend server is running
@@ -416,6 +385,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Issue: Protected routes not working
 
 **Solution:**
+
 1. Check browser console for errors
 2. Verify AuthProvider wraps the entire app in `App.jsx`
 3. Check that cookies are being sent (Network tab → Headers)
@@ -424,6 +394,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Issue: Supervisor dashboard shows no data
 
 **Solution:**
+
 1. The system uses mock data if real data isn't available
 2. Run the database initialization script to populate sample data
 3. Check backend logs for Snowflake query errors
@@ -435,9 +406,11 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### Authentication Endpoints
 
 #### POST /api/auth/login
+
 Login user and return JWT token.
 
 **Request:**
+
 ```json
 {
   "username": "supervisor",
@@ -446,6 +419,7 @@ Login user and return JWT token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -462,9 +436,11 @@ Login user and return JWT token.
 ```
 
 #### POST /api/auth/logout
+
 Logout user and clear cookies.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -473,9 +449,11 @@ Logout user and clear cookies.
 ```
 
 #### GET /api/auth/me
+
 Get current user information (requires authentication).
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -491,9 +469,11 @@ Get current user information (requires authentication).
 ### Metrics Endpoints (Supervisor Only)
 
 #### GET /api/metrics/dashboard
+
 Get complete dashboard data.
 
 **Response:**
+
 ```json
 {
   "productivity": [...],
@@ -504,12 +484,15 @@ Get complete dashboard data.
 ```
 
 #### GET /api/metrics/productivity
+
 Get productivity metrics per employee.
 
 #### GET /api/metrics/error-rates
+
 Get error rates per employee.
 
 #### GET /api/metrics/efficiency
+
 Get overall line efficiency.
 
 ---
@@ -529,6 +512,7 @@ Get overall line efficiency.
 ## Support
 
 For issues or questions:
+
 - Check the Troubleshooting section above
 - Review backend logs in the terminal
 - Check browser console for frontend errors

@@ -1,4 +1,4 @@
-# System Architecture - GateGroup Authentication System
+# System Architecture - SmartStation
 
 ## Overview Diagram
 
@@ -73,8 +73,7 @@
            └──────────────────┬──────────────────┘
                               │
            ┌──────────────────▼──────────────────┐
-           │      SNOWFLAKE DATABASE             │
-           │   cucbppa-am55842.snowflake.com    │
+           │      SNOWFLAKE DATABASE (configurable)
            │                                     │
            │  Tables:                            │
            │  - USERS                            │
@@ -415,6 +414,7 @@ Login Event
 ## Technology Stack
 
 ### Frontend
+
 - **Framework**: React 19.1.1
 - **Routing**: React Router DOM 7.9.4
 - **Styling**: Tailwind CSS 3.4.18
@@ -422,6 +422,7 @@ Login Event
 - **State Management**: React Context API
 
 ### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express.js 4.18.2
 - **Authentication**: JWT (jsonwebtoken 9.x)
@@ -430,12 +431,14 @@ Login Event
 - **CORS**: cors 2.8.5
 
 ### Database
+
 - **Database**: Snowflake
 - **Account**: cucbppa-am55842
 - **Database**: LOGIN_DB
 - **Schema**: MAIN
 
 ### Development Tools
+
 - **Python**: 3.8+ (for DB initialization)
 - **Package Manager**: npm
 - **Version Control**: Git

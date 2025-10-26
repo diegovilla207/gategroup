@@ -1,6 +1,6 @@
-# Sistema de Inventario GateGroup
+# Sistema de Inventario - SmartStation
 
-Sistema completo de validación de inventario para vuelos, con integración de IA (Gemini) para análisis visual de productos.
+Sistema de validación de inventario para vuelos dentro de SmartStation, con integración opcional de IA (Gemini) para análisis visual de productos.
 
 ## Estructura del Proyecto
 
@@ -23,21 +23,25 @@ gategroup-1/
 ### Backend
 
 1. Navegar a la carpeta del backend:
-```bash
+
+```powershell
 cd backend
 ```
 
 2. Instalar dependencias de Node.js:
-```bash
+
+```powershell
 npm install
 ```
 
 3. Verificar que Python 3 esté instalado:
-```bash
+
+```powershell
 python3 --version
 ```
 
-4. Dar permisos de ejecución a los scripts de Python:
+4. (Windows) No es necesario usar chmod; simplemente asegúrate de que Python puede ejecutar los scripts. En Unix/macOS, usa:
+
 ```bash
 chmod +x scripts/get_inventory.py
 chmod +x scripts/validate_inventory.py
@@ -46,11 +50,13 @@ chmod +x scripts/validate_inventory.py
 ### Frontend
 
 1. Navegar a la carpeta del frontend:
+
 ```bash
 cd gategroup
 ```
 
 2. Las dependencias ya deberían estar instaladas, pero si no:
+
 ```bash
 npm install
 ```
@@ -60,34 +66,39 @@ npm install
 ### 1. Iniciar el Backend
 
 Desde la carpeta `backend`:
-```bash
+
+```powershell
 npm start
 ```
 
-El servidor estará corriendo en `http://localhost:3001`
+El servidor estará corriendo en http://localhost:3001
 
 Para desarrollo con auto-reload:
-```bash
+
+```powershell
 npm run dev
 ```
 
 ### 2. Iniciar el Frontend
 
 Desde la carpeta `gategroup`:
-```bash
+
+```powershell
 npm run dev
 ```
 
-El frontend estará corriendo en `http://localhost:5173` (o el puerto que indique Vite)
+El frontend estará corriendo en http://localhost:5173 (o el puerto que indique Vite)
 
 ## Flujo de Uso
 
 ### 1. Pantalla de Ingreso de Vuelo
+
 - El usuario ingresa el número de vuelo (ej: AM241, BA456)
 - Al presionar "Obtener Inventario", el sistema consulta el backend
 - El backend ejecuta el script Python que devuelve el inventario esperado
 
 ### 2. Pantalla de Selección de Categoría
+
 - Se muestran 3 categorías:
   - Comidas
   - Bebidas No Alcohólicas
@@ -96,6 +107,7 @@ El frontend estará corriendo en `http://localhost:5173` (o el puerto que indiqu
 - Las categorías ya completadas se marcan con un check verde
 
 ### 3. Pantalla de Escaneo
+
 - Se muestran los productos esperados para la categoría seleccionada
 - El usuario toma fotos de los productos sobre una báscula
 - Cada foto se procesa con Gemini AI para extraer:
@@ -106,20 +118,25 @@ El frontend estará corriendo en `http://localhost:5173` (o el puerto que indiqu
 - Al presionar "Enviar para Validación", los datos se envían al backend
 
 ### 4. Validación en Backend
+
 El backend compara los datos escaneados contra el inventario esperado:
+
 - Verifica el peso total (con tolerancias)
 - Verifica que todos los productos esperados estén presentes
 - Detecta productos faltantes o extra
 
 **Si la validación es exitosa:**
+
 - La categoría se marca como completada
 - El sistema vuelve a la selección de categorías
 
 **Si hay errores:**
+
 - Se muestran los errores específicos
 - El usuario puede volver a tomar fotos
 
 ### 5. Pantalla Final
+
 - Cuando todas las categorías están validadas
 - Se muestra un mensaje de "Inventario de vuelo completo"
 - El usuario puede procesar un nuevo vuelo
@@ -127,9 +144,11 @@ El backend compara los datos escaneados contra el inventario esperado:
 ## Endpoints del Backend
 
 ### POST /api/inventory/flight
+
 Obtiene el inventario esperado para un vuelo.
 
 **Request:**
+
 ```json
 {
   "flight_number": "AM241"
@@ -137,6 +156,7 @@ Obtiene el inventario esperado para un vuelo.
 ```
 
 **Response:**
+
 ```json
 {
   "orden_vuelo": {
@@ -163,9 +183,11 @@ Obtiene el inventario esperado para un vuelo.
 ```
 
 ### POST /api/inventory/validate
+
 Valida el inventario escaneado contra el inventario esperado.
 
 **Request:**
+
 ```json
 {
   "flight_number": "AM241",
@@ -181,6 +203,7 @@ Valida el inventario escaneado contra el inventario esperado.
 ```
 
 **Response:**
+
 ```json
 {
   "flight_number": "AM241",
@@ -210,11 +233,12 @@ Valida el inventario escaneado contra el inventario esperado.
 ```
 
 ### GET /api/health
+
 Health check del servidor.
 
 ## Formato JSON de Gemini
 
-Cuando el usuario toma una foto, Gemini AI analiza la imagen y devuelve:
+Cuando el usuario toma una foto, Gemini AI analiza la imagen y devuelve un JSON similar a:
 
 ```json
 {
@@ -255,10 +279,10 @@ inventory_database = {
 El componente `Inventory.jsx` maneja el estado con React hooks:
 
 ```javascript
-const [step, setStep] = useState('flight_input');
+const [step, setStep] = useState("flight_input");
 // Pasos: 'flight_input', 'category_selection', 'scanning', 'complete'
 
-const [flightNumber, setFlightNumber] = useState('');
+const [flightNumber, setFlightNumber] = useState("");
 const [inventoryData, setInventoryData] = useState(null);
 const [selectedCategory, setSelectedCategory] = useState(null);
 const [scannedPhotos, setScannedPhotos] = useState([]);
@@ -268,29 +292,31 @@ const [validationResult, setValidationResult] = useState(null);
 
 ## Configuración de API Keys
 
-La API key de Gemini está configurada en `Inventory.jsx`:
+La integración con Gemini requiere una API key. Actualmente el proyecto incluye una key placeholder en `Inventory.jsx`.
 
-```javascript
-const GEMINI_API_KEY = "AIzaSyAxGw0arzRYw_VxnH73NIeK7wnOEJ28yLY";
-```
+IMPORTANTE: No pongas claves en el código fuente. Mueve cualquier API key a variables de entorno y a un vault antes de desplegar.
 
-**Importante:** En producción, mueve esta key a variables de entorno.
+Ejemplo (frontend): usa una ruta del backend que inyecte el token de forma segura o solicite la clave desde un servicio seguro.
 
 ## Troubleshooting
 
 ### Error: Cannot find module 'express'
-```bash
-cd backend && npm install
+
+```powershell
+cd backend; npm install
 ```
 
 ### Error: Python script not found
-Verifica que los scripts estén en `backend/scripts/` y tengan permisos de ejecución.
+
+Verifica que los scripts estén en `backend/scripts/`.
 
 ### Error: CORS
-El backend ya tiene CORS configurado. Si sigues teniendo problemas, verifica que el frontend esté apuntando a `http://localhost:3001`.
+
+El backend ya tiene CORS configurado. Si sigues teniendo problemas, verifica que el frontend esté apuntando a http://localhost:3001 y que las solicitudes incluyan `credentials: 'include'` si usas cookies.
 
 ### Error: Gemini API
-Verifica que la API key sea válida y que tengas conexión a internet.
+
+Verifica que la API key sea válida y que tengas conexión a internet. No expongas la clave en el frontend para producción.
 
 ## Próximas Mejoras
 
