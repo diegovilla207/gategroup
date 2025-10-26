@@ -1,0 +1,132 @@
+Proyecto: GateGroup SmartStation (HackMTY 2025)
+Resumen:
+Objetivo: Construir una web-app (React + Vite) para optimizar las operaciones de catering de GateGroup.
+
+Entregable Principal: Un componente "Smart Bottle Analyzer" que usa IA (Gemini) para auditar botellas de licor retornadas, comparando una foto con las reglas de negocio (SLA) de cada aerolínea.
+
+Entregable Secundario (WIP): Un módulo "Inventory Manager".
+
+Fuentes de Datos:
+
+Imágenes: Captura de cámara en vivo o subida de archivo (<input type="file">) desde el frontend.
+
+Reglas SLA: Un objeto/JSON hardcodeado en el frontend que mapea Customer_Code (ej. "BA", "EK") a sus SLA_Reuse_Policy (extraídas del archivo [HackMTY2025]_AlcoholBottleHandling_Dataset_v1.xlsx).
+
+Evento: Hackathon HackMTY 2025. La prioridad es un demo 100% funcional del "Smart Bottle Analyzer".
+
+Contrato de API (Frontend ➔ Gemini AI)
+Esta es la lógica central. No tenemos un backend propio; llamamos a la API de Gemini directamente desde el cliente (React) usando el SDK @google/generative-ai.
+
+Modelo: gemini-2.5-flash-preview-09-2025 (o el modelo multimodal más reciente disponible, ej. gemini-1.5-flash).
+
+Tipo: Petición Multimodal (Texto + Imagen).
+
+Prompt (Texto + Imagen):
+
+Fragmento de código
+
+System: Eres "GateGuide", un asistente de control de calidad experto en catering de aerolíneas para GateGroup. Tu trabajo es analizar una imagen de una botella retornada y decidir la acción correcta basándote ESTRICTAMENTE en la política SLA de la aerolínea.
+
+Contexto:
+- Aerolínea: [NOMBRE_AEROLINEA] (ej. "British Airways")
+- Política SLA Estricta: "[TEXTO_DE_LA_POLITICA_SLA]" (ej. "Refill if fill between 60–80% and reseal")
+
+Tarea:
+Analiza la [IMAGEN_DE_BOTELLA] adjunta.
+
+Responde ÚNICAMENTE con un objeto JSON válido que siga este esquema exacto:
+{
+  "action": "KEEP" | "REPLACE" | "REFILL" | "DISCARD" | "UNKNOWN",
+  "reasoning": "Una explicación breve (máx 15 palabras) de por qué tomaste esa decisión, basándote en la imagen y la política SLA."
+}
+Acciones de Salida (JSON action):
+
+KEEP: La botella está bien para reutilizar tal cual.
+
+REPLACE: La botella debe ser reemplazada (ej. etiqueta dañada, nivel incorrecto).
+
+REFILL: La botella debe ser rellenada según la política.
+
+DISCARD: La botella debe ser desechada.
+
+UNKNOWN: No se puede determinar la acción desde la imagen.
+
+Requisitos Funcionales:
+HomePage.jsx: Contiene la mascota animada (Lottie/PNG) y la navegación a los dos módulos.
+
+SmartBottleAnalyzer.jsx:
+
+Un Dropdown para seleccionar la aerolínea (BA, EK, TK, EY, CX, SQ).
+
+Un componente de captura de imagen (react-webcam o <input type="file" accept="image/*">).
+
+Un botón "Analizar" que:
+
+Obtiene la política SLA correcta para la aerolínea seleccionada (del JSON hardcodeado).
+
+Envía el prompt multimodal (texto de política + imagen) a Gemini.
+
+Parsea la respuesta JSON de Gemini.
+
+Una sección de resultados que muestra la action (ej. "REPLACE") y el reasoning.
+
+Manejo de Errores: Mostrar mensajes claros si la API de Gemini falla, la API key es inválida, o el JSON de respuesta no se puede parsear.
+
+Calidad de Código (Stack):
+Frontend: React 18+ con Vite.
+
+Routing: react-router-dom (createBrowserRouter).
+
+Estilos: Tailwind CSS. Todo el estilismo debe usar clases de Tailwind (utility-first).
+
+IA: @google/generative-ai (Google AI JavaScript SDK).
+
+Estado: React Hooks (useState, useContext, useRef).
+
+Prioridades (MVP → Bonus):
+Flujo completo del SmartBottleAnalyzer.jsx (Seleccionar Aerolínea -> Cargar Imagen -> Llamar a Gemini -> Mostrar action y reasoning).
+
+UI pulida en HomePage y SmartBottleAnalyzer con Tailwind y la mascota.
+
+Objeto SLA_POLICIES hardcodeado con las 6 aerolíneas.
+
+Manejo de estados (loading, error, success) durante la llamada a la API.
+
+Componente InventoryManager.jsx (placeholder, no funcional).
+
+Entrega Esperada por la IA:
+Proveer código que siga las mejores prácticas de React (Hooks, componentización).
+
+Usar Tailwind CSS para todos los estilos.
+
+Envolver la lógica de Gemini en un módulo/hook reutilizable (ej. useGeminiAnalyzer.js).
+
+Proponer código limpio, comentado y listo para integrar.
+
+Si pido implementar X, primero generar tests (si aplica), luego la implementación.
+
+Constraints (Restricciones):
+NO hardcodear la GEMINI_API_KEY. Debe leerse desde import.meta.env.VITE_GEMINI_API_KEY (archivo .env.local).
+
+El nombre del modelo de Gemini debe ser una constante.
+
+Las respuestas de la IA deben ser estrictamente JSON.
+
+Evitar useEffect excesivos.
+
+Standards (Estándares):
+Commits pequeños y atómicos.
+
+Estructura de carpetas: /src/pages, /src/components, /src/hooks, /src/assets.
+
+Nombres de archivos en PascalCase.jsx para componentes.
+
+
+Quiero que me ayuds a verificar si necesitas que te proporcione algo más para comenzar con la implementación de esto por favor, sino, dimelo para que empecemos, a eso me refiero si se necesito algo en especial para conectarse con snowflake o algo así por el estilo y te comparto la información necesaria para que te puedas conectar a las cuentas de snowflake:
+
+SNOWFLAKE_USER="Rosu76"
+SNOWFLAKE_PASSWORD="HTC7fBxi3ZmafFV"
+SNOWFLAKE_ACCOUNT="cucbppa-am55842"
+SNOWFLAKE_WAREHOUSE="COMPUTE_WH"
+SNOWFLAKE_DATABASE="INVENTARIO01_GG"
+SNOWFLAKE_SCHEMA="MAIN"
